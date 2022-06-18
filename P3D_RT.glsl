@@ -418,10 +418,17 @@ void main()
 {
     gSeed = float(baseHash(floatBitsToUint(gl_FragCoord.xy))) / float(0xffffffffU) + iTime;
 
-    vec2 mouse = iMouse.xy / iResolution.xy;
-    mouse.x = mouse.x * 2.0 - 1.0;
+    vec2 mouse = iMouse.xy == vec2(0) ? vec2(0.0) : 
+              abs(iMouse.xy)/iResolution.xy - .5;
 
-    vec3 camPos = vec3(mouse.x * 10.0, mouse.y * 5.0, 8.0);
+    float zoom = 8.0;
+	if( iMouse.z>0.0 ) // mouse button is down, move mouze up/down to zoom in/out
+	{
+        zoom += 8.0*mouse.y;
+    }
+    vec3 camPos = vec3(zoom*sin(mouse.x*2.0), 3.+2.*mouse.y, zoom*cos(mouse.x*2.0));
+
+
     vec3 camTarget = vec3(0.0, 0.0, -1.0);
     float fovy = 60.0;
     float aperture = 0.0;
