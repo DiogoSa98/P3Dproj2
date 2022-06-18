@@ -55,7 +55,7 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
         rec))
     {
         hit = true;
-        rec.material = createDialectricMaterial(vec3(0.0), 1.333, 0.0);
+        rec.material = createDialectricMaterial(vec3(1.0, 0.0, 0.0), 1.333, 0.0);
     }
 
 // if(hit_sphere(

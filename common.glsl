@@ -251,14 +251,14 @@ vec3 metalSchlick(float cosine, vec3 F0)
 
 vec3 beer(vec3 color, float distanceTravelled)
 {
-    // vec3 absorbance = (vec3(1.)-color) * 0.15 * -distanceTravelled;
-    // return exp(absorbance); 
+    vec3 absorbance = (vec3(1.)-color) * 1.0 * -distanceTravelled;
+    return exp(absorbance); 
     // according to slides should just be this:
-    return exp(-color*distanceTravelled);
+    //return exp(-color*distanceTravelled);
 }
 
 bool customRefract(vec3 rIn_direction, vec3 outwardNormal, float niOverNt, out vec3 refracted){
-    float cosine;
+    float cosI;
     vec3 v;
     vec3 vt;
     float sinT;
@@ -266,20 +266,26 @@ bool customRefract(vec3 rIn_direction, vec3 outwardNormal, float niOverNt, out v
     float cosT;
     float aux;
     vec3 t;
+    vec3 rt;
 
-    cosine = dot(rIn_direction, outwardNormal);
+    cosI = dot(rIn_direction, outwardNormal);
+
     v = - rIn_direction;
-    vt = (dot(v,outwardNormal))*outwardNormal - v;
+
+    vt = (dot(v,normalize(outwardNormal))) * normalize(outwardNormal) - v;
+
     sinI = length(vt);
 
     sinT = niOverNt*sinI;
 
-    t = (1.0 / sinI)*vt;
+    t = (1.0 / length(vt)) * vt;
 
     aux = 1.0 - (sinT * sinT);
     cosT = sqrt(aux);
 
-    refracted = sinT*t + cosT*(-outwardNormal);
+    rt = sinT * t + cosT * ( -normalize(outwardNormal));
+
+    refracted = rt;
 
     if (sinT > 1.0){
         return false;
@@ -318,7 +324,7 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
         vec3 outwardNormal;
         float niOverNt;
         float cosine;
-        float sineT;
+        //float sineT;
 
         cosine = -dot(rIn.d, rec.normal);
 
@@ -338,9 +344,9 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
 
             // color gathered by refracted ray should be multiplied by this attenuation value
             //atten = apply Beer's law by using rec.material.refractColor 
-            //atten = beer(rec.material.refractColor, length(rec.pos - rIn.o));//Beer's law
+            atten = beer(rec.material.refractColor, rec.t); // Beer's law
 
-            //atten = exp(-rec.material.refractColor * rec.t); //Beer's law
+            //atten = exp(-rec.material.refractColor * rec.t); // Beer's law
         }
         else  //hit from outside
         {
@@ -508,7 +514,7 @@ bool hit_sphere(Sphere s, Ray r, float tmin, float tmax, out HitRecord rec)
         // info.normal = normalize((rayPos+rayDir*dist) - sphere.xyz) * (fromInside ? -1.0 : 1.0);
         rec.t = dist;
         rec.pos = pointOnRay(r, rec.t);
-        rec.normal = normalize(rec.pos - s.center) * (fromInside ? -1.0 : 1.0); 
+        rec.normal = normalize(rec.pos - s.center); 
 
         return true;
     }
