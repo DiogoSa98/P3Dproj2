@@ -244,6 +244,11 @@ float schlick(float cosine, float refIdx)
     return r0 + (1.-r0)*pow((1.-cosine),5.);
 }
 
+vec3 metalSchlick(float cosine, vec3 F0)
+{
+    return F0 + (1.0-F0) * pow(clamp(1.0 - cosine, 0.0, 1.0), 5.0);
+}
+
 vec3 beer(vec3 color, float distanceTravelled)
 {
     // vec3 absorbance = (vec3(1.)-color) * 0.15 * -distanceTravelled;
@@ -251,6 +256,8 @@ vec3 beer(vec3 color, float distanceTravelled)
     // according to slides should just be this:
     return exp(-color*distanceTravelled);
 }
+
+
 
 bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
 {
@@ -270,7 +277,8 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
         vec3 rd = reflect(rIn.d, rec.normal);
         vec3 ro = rec.pos + rec.normal * epsilon;
         rScattered = createRay(ro, normalize(rd + rec.material.roughness*randomInUnitSphere(gSeed)), rIn.t);
-        atten = rec.material.specColor;
+        // atten = rec.material.specColor;
+        atten = metalSchlick(-dot(rIn.d, rec.normal), rec.material.specColor);
         return true;
     }
     if(rec.material.type == MT_DIALECTRIC)

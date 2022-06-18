@@ -163,7 +163,6 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
     return hit;
 }
 
-// I DON'T UNDERSTAND THIS FUNCTION, seems to have unnecessary parameters (maybe blinn phong?????? weird)
 vec3 directlighting(pointLight pl, Ray r, HitRecord rec){
     vec3 diffCol, specCol;
     vec3 colorOut = vec3(0.0, 0.0, 0.0);
@@ -171,20 +170,35 @@ vec3 directlighting(pointLight pl, Ray r, HitRecord rec){
     HitRecord dummy;
 
     //INSERT YOUR CODE HERE
-    
-    // check if hit point is directly lit by light point
-    vec3 rd = normalize(pl.pos - rec.pos);
-    vec3 ro = rec.pos + rec.normal * epsilon;
-    Ray shadowRay = createRay(rd, ro);
-    
-    if(hit_world(shadowRay, 0.001, 10000.0, dummy))
-    {
-        if (length(dummy.pos-rec.pos) < length(pl.pos-rec.pos)) // rec point is under an object
-            return dummy.material.emissive;
-        else
-            return pl.color; // rec point is directly under light;
+    vec3 lDir = normalize(pl.pos - rec.pos);
+    float intensity = max(dot(rec.normal, lDir), 0.0);
+    Ray shadowRay = createRay(rec.pos + rec.normal * epsilon, lDir);
+    float lDist = length(pl.pos - rec.pos);
+
+    if (intensity > 0.0) {
+        if (!hit_world(shadowRay, 0.0, lDist, dummy)) {
+            if (rec.material.type == MT_DIFFUSE) {
+                diffCol = rec.material.albedo / pi * intensity;
+                specCol = rec.material.specColor;
+                shininess = 4.0 / (pow(rec.material.roughness, 4.0)+epsilon)-2.0; // no idea what is going on here
+            }
+            if (rec.material.type == MT_METAL) {
+                diffCol = rec.material.albedo;
+                specCol = metalSchlick(intensity, rec.material.specColor);
+                shininess = 8.0 / (pow(rec.material.roughness, 4.0)+epsilon)-2.0; // no idea what is going on here
+            }
+            if (rec.material.type == MT_DIALECTRIC) {
+                diffCol = rec.material.albedo;
+                specCol = rec.material.specColor;
+                shininess = 500.0; 
+            }
+
+            vec3 h = normalize(lDir - r.d);
+            float intSpec = max(dot(h, rec.normal), 0.0);
+            vec3 spec = specCol * pow(intSpec, shininess);
+            colorOut = (diffCol + spec) * pl.color;
+        }
     }
-    colorOut = pl.color;
 
 	return colorOut; 
 }
@@ -202,13 +216,9 @@ vec3 rayColor(Ray r)
         {
             //calculate direct lighting with 3 white point lights:
             {
-                //createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0))
-                //createPointLight(vec3(8.0, 15.0, 3.0), vec3(1.0, 1.0, 1.0))
-                //createPointLight(vec3(1.0, 15.0, -9.0), vec3(1.0, 1.0, 1.0))
-
-                //for instance: col += directlighting(createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
-                // col += directlighting(createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
                 col += directlighting(createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
+                col += directlighting(createPointLight(vec3(8.0, 15.0, 3.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
+                col += directlighting(createPointLight(vec3(1.0, 15.0, -9.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
             }
             
             //calculate secondary ray and update throughput
@@ -219,6 +229,10 @@ vec3 rayColor(Ray r)
                 //  insert your code here
                 r = scatterRay;
                 throughput *= atten;  
+            } 
+            else
+            {
+                return vec3(0.0);
             }
         
         }
