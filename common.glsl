@@ -257,6 +257,37 @@ vec3 beer(vec3 color, float distanceTravelled)
     return exp(-color*distanceTravelled);
 }
 
+bool customRefract(vec3 rIn_direction, vec3 outwardNormal, float niOverNt, out vec3 refracted){
+    float cosine;
+    vec3 v;
+    vec3 vt;
+    float sinT;
+    float sinI;
+    float cosT;
+    float aux;
+    vec3 t;
+
+    cosine = dot(rIn_direction, outwardNormal);
+    v = - rIn_direction;
+    vt = (dot(v,outwardNormal))*outwardNormal - v;
+    sinI = length(vt);
+
+    sinT = niOverNt*sinI;
+
+    t = (1.0 / sinI)*vt;
+
+    aux = 1.0 - (sinT * sinT);
+    cosT = sqrt(aux);
+
+    refracted = sinT*t + cosT*(-outwardNormal);
+
+    if (sinT > 1.0){
+        return false;
+    }
+
+    return true;
+}
+
 
 
 bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
@@ -289,61 +320,71 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
         float cosine;
         float sineT;
 
-        if(dot(rIn.d, rec.normal) > 0.0) //hit inside
+        cosine = -dot(rIn.d, rec.normal);
+
+        if(cosine < 0.0) //hit inside
         {
             outwardNormal = -rec.normal;
             niOverNt = rec.material.refIdx;
             // cosine = refraction cosine for schlick; 
-            cosine = dot(rIn.d, rec.normal);
-            sineT = rec.material.refIdx*rec.material.refIdx*(1.-cosine*cosine); // not 100% sure about this but most people in shadertoy do it this way??
+            //cosine = dot(rIn.d, rec.normal);
+            //sineT = rec.material.refIdx*rec.material.refIdx*(1.-cosine*cosine); // not 100% sure about this but most people in shadertoy do it this way??
                         
             // if (sinT > 1.0) // Total internal reflection
                 // return 1; shlick should return reflection only
                 // break from if 
 
-            cosine = sqrt(1. - sineT); 
+            //cosine = sqrt(1. - sineT); 
 
             // color gathered by refracted ray should be multiplied by this attenuation value
             //atten = apply Beer's law by using rec.material.refractColor 
-            atten = beer(rec.material.refractColor, length(rec.pos - rIn.o));
+            //atten = beer(rec.material.refractColor, length(rec.pos - rIn.o));//Beer's law
+
+            //atten = exp(-rec.material.refractColor * rec.t); //Beer's law
         }
         else  //hit from outside
         {
             outwardNormal = rec.normal;
             niOverNt = 1.0 / rec.material.refIdx;
-            cosine = -dot(rIn.d, rec.normal);
+            //cosine = -dot(rIn.d, rec.normal);
         }
 
         //Use probabilistic math to decide if scatter a reflected ray or a refracted ray
 
+        vec3 refracted;
         float reflectProb;
 
         //if no total reflection  reflectProb = schlick(cosine, rec.material.refIdx);  
         //else reflectProb = 1.0;
-        if( sineT <= 1.)
+        if(customRefract(rIn.d, outwardNormal, niOverNt, refracted)){
+            if (niOverNt > 1.0){
+                cosine = sqrt(1.0 - niOverNt*niOverNt*(1.0 - cosine*cosine));
+            }
             reflectProb = schlick(cosine, rec.material.refIdx);
+        }
         else
             reflectProb = 1.;
 
-        vec3 rsDir;
+        //vec3 rsDir;
         // not 100% sure about outwardNormal and if hash1 [0, 1[
         // what should atten be ?
         if ( hash1(gSeed) < reflectProb )  //Reflection
         {
-            // rScattered = calculate reflected ray
+            vec3 reflected = reflect(rIn.d, outwardNormal);
+            rScattered = createRay(rec.pos + epsilon * rec.normal, normalize(reflected), rIn.t);
             // atten *= vec3(reflectProb); not necessary since we are only scattering reflectProb rays and not all reflected rays
-            rsDir = reflect(rIn.d, outwardNormal);
+            //rsDir = reflect(rIn.d, outwardNormal);
 
         } 
         else //Refraction
         {
-            // rScattered = calculate refracted ray
+            rScattered = createRay(rec.pos - epsilon * outwardNormal, normalize(refracted), rIn.t);
            // atten *= vec3(1.0 - reflectProb); not necessary since we are only scattering 1-reflectProb rays and not all refracted rays
-            rsDir = refract(rIn.d, outwardNormal, rec.material.refIdx); // not 100% sure about normal or refIdx
+            //rsDir = refract(rIn.d, outwardNormal, rec.material.refIdx); // not 100% sure about normal or refIdx
         }
 
-        vec3 rsOrigin = rec.pos + outwardNormal * epsilon;
-        rScattered = createRay(rsDir, rsOrigin, rIn.t);
+        //vec3 rsOrigin = rec.pos + outwardNormal * epsilon;
+        //rScattered = createRay(rsDir, rsOrigin, rIn.t);
 
         return true;
     }
@@ -359,19 +400,32 @@ Triangle createTriangle(vec3 v0, vec3 v1, vec3 v2)
     return t;
 }
 
-// bool hit_triangle(Triangle t, Ray r, float tmin, float tmax, out HitRecord rec)
-// {
-//     //INSERT YOUR CODE HERE
-//     //calculate a valid t and normal
-//     if(t < tmax && t > tmin)
-//     {
-//         rec.t = t;
-//         rec.normal = normal;
-//         rec.pos = pointOnRay(r, rec.t);
-//         return true;
-//     }
-//     return false;
-// }
+bool hit_triangle(Triangle tr, Ray r, float tmin, float tmax, out HitRecord rec)
+{
+    vec3 v1 = tr.b - tr.a;
+    vec3 v2 = tr.c - tr.a;
+    vec3 v3 = -r.d;
+
+    vec3 VS = r.o - tr.a;
+
+    // Cramer's rule
+    float d = 1.0/determinant(mat3(v1, v2, v3 ));
+    float u =   d*determinant(mat3(VS, v2, v3 ));
+    float v =   d*determinant(mat3(v1, VS, v3 ));
+    float t =   d*determinant(mat3(v1, v2, VS));
+
+    if( u<0.0 || v<0.0 || (u+v)>1.0 )
+        return false;
+
+    if (t > tmin && t < tmax)
+    {
+        rec.t = t;
+        rec.normal = normalize(cross(tr.b - tr.a, tr.c - tr.a));
+        rec.pos = pointOnRay(r, rec.t);
+        return true;
+    }
+    return false;
+}
 
 
 struct Sphere
