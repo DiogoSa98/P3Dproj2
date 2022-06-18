@@ -204,6 +204,19 @@ Material createDiffuseMaterial(vec3 albedo)
     return m;
 }
 
+Material createDiffuseEmissiveMaterial(vec3 albedo, vec3 emissive)
+{
+    Material m;
+    m.type = MT_DIFFUSE;
+    m.albedo = albedo;
+    m.specColor = vec3(0.0);
+    m.roughness = 1.0;  
+    m.refIdx = 1.0;
+    m.refractColor = vec3(0.0);
+    m.emissive = emissive;
+    return m;
+}
+
 Material createMetalMaterial(vec3 specClr, float roughness)
 {
     Material m;
@@ -253,10 +266,20 @@ vec3 beer(vec3 color, float distanceTravelled)
 {
     // vec3 absorbance = (vec3(1.)-color) * 0.15 * -distanceTravelled;
     // return exp(absorbance); 
-    // according to slides should just be this:
-    return exp(-color*distanceTravelled);
+    return exp(-color*distanceTravelled); // according to slides should just be this
 }
 
+bool customRefract(const in vec3 v, const in vec3 n, const in float ni_over_nt, 
+                      out vec3 refracted) {
+    float dt = dot(v, n);
+    float discriminant = 1. - ni_over_nt*ni_over_nt*(1.-dt*dt);
+    if (discriminant > 0.) {
+        refracted = ni_over_nt*(v - n*dt) - n*sqrt(discriminant);
+        return true;
+    } else { 
+        return false;
+    }
+}
 
 
 bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
@@ -277,7 +300,6 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
         vec3 rd = reflect(rIn.d, rec.normal);
         vec3 ro = rec.pos + rec.normal * epsilon;
         rScattered = createRay(ro, normalize(rd + rec.material.roughness*randomInUnitSphere(gSeed)), rIn.t);
-        // atten = rec.material.specColor;
         atten = metalSchlick(-dot(rIn.d, rec.normal), rec.material.specColor);
         return true;
     }
@@ -289,61 +311,76 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
         float cosine;
         float sineT;
 
-        if(dot(rIn.d, rec.normal) > 0.0) //hit inside
-        {
-            outwardNormal = -rec.normal;
-            niOverNt = rec.material.refIdx;
-            // cosine = refraction cosine for schlick; 
-            cosine = dot(rIn.d, rec.normal);
-            sineT = rec.material.refIdx*rec.material.refIdx*(1.-cosine*cosine); // not 100% sure about this but most people in shadertoy do it this way??
-                        
-            // if (sinT > 1.0) // Total internal reflection
-                // return 1; shlick should return reflection only
-                // break from if 
+        // cosine = -dot(rIn.d, rec.normal);
 
-            cosine = sqrt(1. - sineT); 
+        // if (cosine < 0.0) // hit inside 
+        // {
+        //     outwardNormal = -rec.normal;
+        //     niOverNt = rec.material.refIdx;
+        //     // atten = beer(rec.material.refractColor, length(rec.pos - rIn.o));
+        // }
+        // else // hit from outside
+        // {
+        //     outwardNormal = rec.normal;
+        //     niOverNt = 1.0 / rec.material.refIdx;
+        // }
 
-            // color gathered by refracted ray should be multiplied by this attenuation value
-            //atten = apply Beer's law by using rec.material.refractColor 
-            atten = beer(rec.material.refractColor, length(rec.pos - rIn.o));
+        // vec3 refracted;
+        // float reflectProb;
+
+        // if (customRefract(rIn.d, outwardNormal, niOverNt, refracted)) // no total internal reflection
+        // {
+        //     if (niOverNt > 1.0)
+        //         cosine = sqrt(1.0-niOverNt*niOverNt*(1.0-cosine*cosine));
+        //     reflectProb = schlick(cosine, rec.material.refIdx);
+        // } 
+        // else // total internal reflection
+        // {
+        //     reflectProb = 1.0;
+        // }
+
+        // reflectProb = 0.0; // DEBUG FULLY REFRACTIVE SPHERE
+
+        // if (hash1(gSeed) < reflectProb)
+        // {
+        //     vec3 reflected = reflect(rIn.d, rec.normal);
+        //     rScattered = createRay(rec.pos + epsilon * rec.normal, normalize(reflected), rIn.t);
+        // }
+        // else
+        // {
+        //     rScattered = createRay(rec.pos + epsilon * rec.normal, normalize(refracted), rIn.t);
+        // }
+        float cosThetaI = dot(rIn.d, rec.normal);
+        vec3 facingNormal = (cosThetaI < 0.) ? rec.normal : -rec.normal;
+
+        float eta = (cosThetaI < 0.) ? (1. / rec.material.refIdx) : rec.material.refIdx;
+        
+        vec3 refracted = refract(rIn.d, facingNormal, eta);
+        
+        if (all(equal(refracted, vec3(0.)))) {
+            // Total internal reflection
+            vec3 reflected = reflect(rIn.d, facingNormal);
+            
+            rScattered = createRay(rec.pos + epsilon * rec.normal, reflected, rIn.t);
+        } else {
+            // Fresnel F0
+            float F0_ = (rec.material.refIdx - 1.) / (1. + rec.material.refIdx);
+            float F0 = F0_ * F0_;
+            
+            // Fresnel with Schlick approximation
+            float cosTheta = (cosThetaI < 0.) ? -cosThetaI : dot(refracted, rec.normal);
+            float F = F0 + (1.0 - F0) * pow(1. - cosTheta, 5.);
+            
+            if (hash1(gSeed) < F) {
+                vec3 reflected = reflect(rIn.d, facingNormal);
+                
+                rScattered = createRay(rec.pos + epsilon * rec.normal, reflected, rIn.t);
+            } else {
+                atten = rec.material.albedo;
+                
+                rScattered = createRay(rec.pos + epsilon * rec.normal, refracted, rIn.t);
+            }
         }
-        else  //hit from outside
-        {
-            outwardNormal = rec.normal;
-            niOverNt = 1.0 / rec.material.refIdx;
-            cosine = -dot(rIn.d, rec.normal);
-        }
-
-        //Use probabilistic math to decide if scatter a reflected ray or a refracted ray
-
-        float reflectProb;
-
-        //if no total reflection  reflectProb = schlick(cosine, rec.material.refIdx);  
-        //else reflectProb = 1.0;
-        if( sineT <= 1.)
-            reflectProb = schlick(cosine, rec.material.refIdx);
-        else
-            reflectProb = 1.;
-
-        vec3 rsDir;
-        // not 100% sure about outwardNormal and if hash1 [0, 1[
-        // what should atten be ?
-        if ( hash1(gSeed) < reflectProb )  //Reflection
-        {
-            // rScattered = calculate reflected ray
-            // atten *= vec3(reflectProb); not necessary since we are only scattering reflectProb rays and not all reflected rays
-            rsDir = reflect(rIn.d, outwardNormal);
-
-        } 
-        else //Refraction
-        {
-            // rScattered = calculate refracted ray
-           // atten *= vec3(1.0 - reflectProb); not necessary since we are only scattering 1-reflectProb rays and not all refracted rays
-            rsDir = refract(rIn.d, outwardNormal, rec.material.refIdx); // not 100% sure about normal or refIdx
-        }
-
-        vec3 rsOrigin = rec.pos + outwardNormal * epsilon;
-        rScattered = createRay(rsDir, rsOrigin, rIn.t);
 
         return true;
     }
@@ -359,20 +396,32 @@ Triangle createTriangle(vec3 v0, vec3 v1, vec3 v2)
     return t;
 }
 
-// bool hit_triangle(Triangle t, Ray r, float tmin, float tmax, out HitRecord rec)
-// {
-//     //INSERT YOUR CODE HERE
-//     //calculate a valid t and normal
-//     if(t < tmax && t > tmin)
-//     {
-//         rec.t = t;
-//         rec.normal = normal;
-//         rec.pos = pointOnRay(r, rec.t);
-//         return true;
-//     }
-//     return false;
-// }
+bool hit_triangle(Triangle tr, Ray r, float tmin, float tmax, out HitRecord rec)
+{
+    vec3 v1 = tr.b - tr.a;
+    vec3 v2 = tr.c - tr.a;
+    vec3 v3 = -r.d;
 
+    vec3 VS = r.o - tr.a;
+
+    // Cramer's rule
+    float d = 1.0/determinant(mat3(v1, v2, v3 ));
+    float u =   d*determinant(mat3(VS, v2, v3 ));
+    float v =   d*determinant(mat3(v1, VS, v3 ));
+    float t =   d*determinant(mat3(v1, v2, VS));
+
+    if( u<0.0 || v<0.0 || (u+v)>1.0 )
+        return false;
+
+	if (t > tmin && t < tmax)
+    {
+        rec.t = t;
+        rec.normal = normalize(cross(tr.b - tr.a, tr.c - tr.a));
+        rec.pos = pointOnRay(r, rec.t);
+        return true;
+    }
+    return false;
+}
 
 struct Sphere
 {
@@ -454,51 +503,13 @@ bool hit_sphere(Sphere s, Ray r, float tmin, float tmax, out HitRecord rec)
         // info.normal = normalize((rayPos+rayDir*dist) - sphere.xyz) * (fromInside ? -1.0 : 1.0);
         rec.t = dist;
         rec.pos = pointOnRay(r, rec.t);
-        rec.normal = normalize(rec.pos - s.center) * (fromInside ? -1.0 : 1.0); 
+        // rec.normal = normalize(rec.pos - s.center) * (fromInside ? -1.0 : 1.0); 
+        rec.normal = normalize(rec.pos - s.center); 
 
         return true;
     }
     
     return false;
-
-    // //INSERT YOUR CODE HERE
-    // //calculate a valid t and normal
-    // float t;
-    // vec3 normal;
-
-    // vec3 oc = s.center - r.o;
-	// float b = dot(r.d, oc);
-	// float c = dot(oc, oc) - (s.radius * s.radius);
-	// float discriminant = b * b - c;
-
-	// if (c > 0.) // ray origin outside, check b
-	// {
-	// 	if (b <= 0.) // sphere behind ray
-	// 	{
-	// 		return false;
-	// 	}
-
-	// 	if (discriminant <= 0.) // = 0 repeated real number solution (ray tangent); < 0 neither solution is real number
-	// 	{
-	// 		return false;
-	// 	}
-	// 	if (discriminant > 0.) // get smallest root
-	// 	{
-	// 		t = b - sqrt(discriminant);
-	// 	}
-	// }
-	// else // ray origin inside, calculate positive root
-	// {
-	// 	t = b + sqrt(discriminant);
-	// }
-
-    // if(t < tmax && t > tmin) {
-    //     rec.t = t;
-    //     rec.pos = pointOnRay(r, rec.t);
-    //     rec.normal = normalize(rec.pos - s.center); 
-    //     return true;
-    // }
-    // else return false;
 }
 
 // bool hit_movingSphere(MovingSphere s, Ray r, float tmin, float tmax, out HitRecord rec)

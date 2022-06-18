@@ -11,18 +11,185 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
 {
     bool hit = false;
     rec.t = tmax;
-   
-    // if(hit_triangle(createTriangle(vec3(-10.0, -0.01, 10.0), vec3(10.0, -0.01, 10.0), vec3(-10.0, -0.01, -10.0)), r, tmin, rec.t, rec))
+
+    //
+    // BOX
+    //
+    // if(hit_triangle(
+    //     createTriangle(vec3(3.0, 4.0, -5.0), vec3(3.0, -2.0, -5.0), vec3(-3.0, -2.0, -5.0)),
+    //     r,
+    //     tmin,
+    //     rec.t,
+    //     rec))
     // {
     //     hit = true;
-    //     rec.material = createDiffuseMaterial(vec3(0.2));
+    //     rec.material = createDiffuseMaterial(vec3(1.0, 1.0, 1.0));
+    // }
+    // if(hit_triangle(
+    //     createTriangle(vec3(-3.0, 4.0, -5.0), vec3(3.0, 4.0, -5.0), vec3(-3.0, -2.0, -5.0)),
+    //     r,
+    //     tmin,
+    //     rec.t,
+    //     rec))
+    // {
+    //     hit = true;
+    //     rec.material = createDiffuseMaterial(vec3(1.0, 1.0, 1.0));
     // }
 
-    // if(hit_triangle(createTriangle(vec3(-10.0, -0.01, -10.0), vec3(10.0, -0.01, 10), vec3(10.0, -0.01, -10.0)), r, tmin, rec.t, rec))
+    // if(hit_triangle(
+    //     createTriangle(vec3(-3.0, 4.0, -5.0), vec3(-3.0, 4.0, 0.0), vec3(-3.0, -2.0, -5.0)),
+    //     r,
+    //     tmin,
+    //     rec.t,
+    //     rec))
     // {
     //     hit = true;
-    //     rec.material = createDiffuseMaterial(vec3(0.2));
+    //     rec.material = createDiffuseMaterial(vec3(1.0, 0.0, 0.0));
     // }
+    // if(hit_triangle(
+    //     createTriangle(vec3(-3.0, -2.0, 0.0), vec3(-3.0, -2.0, -5.0), vec3(-3.0, 4.0, 0.0)),
+    //     r,
+    //     tmin,
+    //     rec.t,
+    //     rec))
+    // {
+    //     hit = true;
+    //     rec.material = createDiffuseMaterial(vec3(1.0, 0.0, 0.0));
+    // }
+
+    // if(hit_triangle(
+    //     createTriangle(vec3(3.0, 4.0, -5.0), vec3(3.0, -2.0, -5.0), vec3(3.0, 4.0, 0.0)),
+    //     r,
+    //     tmin,
+    //     rec.t,
+    //     rec))
+    // {
+    //     hit = true;
+    //     rec.material = createDiffuseMaterial(vec3(0.0, 1.0, 0.0));
+    // }
+    // if(hit_triangle(
+    //     createTriangle(vec3(3.0, -2.0, 0.0), vec3(3.0, 4.0, 0.0),  vec3(3.0, -2.0, -5.0)),
+    //     r,
+    //     tmin,
+    //     rec.t,
+    //     rec))
+    // {
+    //     hit = true;
+    //     rec.material = createDiffuseMaterial(vec3(0.0, 1.0, 0.0));
+    // }
+
+    // if(hit_triangle(
+    //     createTriangle(vec3(3.0, -2.0, -5.0), vec3(-3.0, -2.0, -5.0), vec3(3.0, -2.0, 0.0)),
+    //     r,
+    //     tmin,
+    //     rec.t,
+    //     rec))
+    // {
+    //     hit = true;
+    //     rec.material = createDiffuseMaterial(vec3(1.0, 1.0, 1.0));
+    // }
+    // if(hit_triangle(
+    //     createTriangle(vec3(-3.0, -2.0, -5.0), vec3(-3.0, -2.0, 0.0), vec3(3.0, -2.0, 0.0)),
+    //     r,
+    //     tmin,
+    //     rec.t,
+    //     rec))
+    // {
+    //     hit = true;
+    //     rec.material = createDiffuseMaterial(vec3(1.0, 1.0, 1.0));
+    // }
+
+    // if(hit_triangle(
+    //     createTriangle(vec3(3.0, 4.0, -5.0), vec3(3.0, 4.0, 0.0),  vec3(-3.0, 4.0, -5.0)),
+    //     r,
+    //     tmin,
+    //     rec.t,
+    //     rec))
+    // {
+    //     hit = true;
+    //     rec.material = createDiffuseMaterial(vec3(1.0, 1.0, 1.0));
+    // }
+    // if(hit_triangle(
+    //     createTriangle(vec3(-3.0, 4.0, -5.0), vec3(3.0, 4.0, 0.0), vec3(-3.0, 4.0, 0.0)),
+    //     r,
+    //     tmin,
+    //     rec.t,
+    //     rec))
+    // {
+    //     hit = true;
+    //     rec.material = createDiffuseMaterial(vec3(1.0, 1.0, 1.0));
+    // }
+
+    // //
+    // // EMISSIVE LIGHT
+    // //
+    // if(hit_triangle(
+    //     createTriangle(vec3(1.0, 3.999, -3.0), vec3(1.0, 3.999, -1.0),  vec3(-1.0, 3.999, -3.0)),
+    //     r,
+    //     tmin,
+    //     rec.t,
+    //     rec))
+    // {
+    //     hit = true;
+    //     rec.material = createDiffuseEmissiveMaterial(vec3(0.0, 0.0, 0.0), vec3(1.0, 0.9, 0.7) * 50.0);
+    // }
+    // if(hit_triangle(
+    //     createTriangle(vec3(-1.0, 3.999, -3.0), vec3(1.0, 3.999, -1.0), vec3(-1.0, 3.999, -1.0)),
+    //     r,
+    //     tmin,
+    //     rec.t,
+    //     rec))
+    // {
+    //     hit = true;
+    //     rec.material = createDiffuseEmissiveMaterial(vec3(0.0, 0.0, 0.0), vec3(1.0, 0.9, 0.7) * 50.0);
+    // }
+
+    // //
+    // // SPHERES
+    // //
+    // if(hit_sphere(
+    //     createSphere(vec3(0.0, -1.2, -2.0), 0.8),
+    //     r,
+    //     tmin,
+    //     rec.t,
+    //     rec))
+    // {
+    //     hit = true;
+    //     rec.material = createDiffuseMaterial(vec3(0.2, 0.5, 0.9));
+    // }
+    // if(hit_sphere(
+    //     createSphere(vec3(-2., -1.2, -2.0), 0.8),
+    //     r,
+    //     tmin,
+    //     rec.t,
+    //     rec))
+    // {
+    //     hit = true;
+    //     rec.material = createDiffuseMaterial(vec3(0.2, 0.9, 0.5));
+    // }
+    // if(hit_sphere(
+    //     createSphere(vec3(2., -1.2, -2.0), 0.8),
+    //     r,
+    //     tmin,
+    //     rec.t,
+    //     rec))
+    // {
+    //     hit = true;
+    //     rec.material = createDiffuseMaterial(vec3(0.9, 0.5, 0.2));
+    // }
+
+
+    if(hit_triangle(createTriangle(vec3(-10.0, -0.01, 10.0), vec3(10.0, -0.01, 10.0), vec3(-10.0, -0.01, -10.0)), r, tmin, rec.t, rec))
+    {
+        hit = true;
+        rec.material = createDiffuseMaterial(vec3(0.2));
+    }
+
+    if(hit_triangle(createTriangle(vec3(-10.0, -0.01, -10.0), vec3(10.0, -0.01, 10), vec3(10.0, -0.01, -10.0)), r, tmin, rec.t, rec))
+    {
+        hit = true;
+        rec.material = createDiffuseMaterial(vec3(0.2));
+    }
 
     if(hit_sphere(
         createSphere(vec3(-4.0, 1.0, 0.0), 1.0),
@@ -47,27 +214,27 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
         rec.material = createMetalMaterial(vec3(0.7, 0.6, 0.5), 0.0);
     }
 
-//     if(hit_sphere(
-//         createSphere(vec3(0.0, 1.0, 0.0), 1.0),
-//         r,
-//         tmin,
-//         rec.t,
-//         rec))
-//     {
-//         hit = true;
-//         rec.material = createDialectricMaterial(vec3(0.0), 1.333, 0.0);
-//     }
+    if(hit_sphere(
+        createSphere(vec3(0.0, 1.0, 0.0), 1.0),
+        r,
+        tmin,
+        rec.t,
+        rec))
+    {
+        hit = true;
+        rec.material = createDialectricMaterial(vec3(0.0), 1.333, 0.0);
+    }
 
-// if(hit_sphere(
-//         createSphere(vec3(0.0, 1.0, 0.0), -0.95),
-//         r,
-//         tmin,
-//         rec.t,
-//         rec))
-//     {
-//         hit = true;
-//         rec.material = createDialectricMaterial(vec3(0.0), 1.333, 0.0);
-//     }
+    if(hit_sphere(
+        createSphere(vec3(0.0, 1.0, 0.0), -0.95),
+        r,
+        tmin,
+        rec.t,
+        rec))
+    {
+        hit = true;
+        rec.material = createDialectricMaterial(vec3(0.0), 1.333, 0.0);
+    }
    
     int numxy = 5;
     
@@ -123,7 +290,6 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
                         rec))
                     {
                         hit = true;
-                       // rec.material.type = MT_METAL;
                         rec.material = createMetalMaterial((hash3(seed) + 1.0) * 0.5, 0.0);
                     }
                 }
@@ -138,24 +304,23 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
                         rec))
                     {
                         hit = true;
-                       // rec.material.type = MT_METAL;
                         rec.material = createMetalMaterial((hash3(seed) + 1.0) * 0.5, hash1(seed));
                     }
                 }
                 else
                 {
-                    // // glass (dialectric)
-                    // if(hit_sphere(
-                    //     createSphere(center, 0.2),
-                    //     r,
-                    //     tmin,
-                    //     rec.t,
-                    //     rec))
-                    // {
-                    //     hit = true;
-                    //     rec.material.type = MT_DIALECTRIC;
-                    //     rec.material = createDialectricMaterial(hash3(seed), 1.2, 0.0);
-                    // }
+                    // glass (dialectric)
+                    if(hit_sphere(
+                        createSphere(center, 0.2),
+                        r,
+                        tmin,
+                        rec.t,
+                        rec))
+                    {
+                        hit = true;
+                        rec.material.type = MT_DIALECTRIC;
+                        rec.material = createDialectricMaterial(hash3(seed), 1.2, 0.0);
+                    }
                 }
             }
         }
@@ -221,6 +386,8 @@ vec3 rayColor(Ray r)
                 col += directlighting(createPointLight(vec3(1.0, 15.0, -9.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
             }
             
+            // col += rec.material.emissive * throughput;
+
             //calculate secondary ray and update throughput
             Ray scatterRay;
             vec3 atten;
@@ -228,13 +395,12 @@ vec3 rayColor(Ray r)
             {   
                 //  insert your code here
                 r = scatterRay;
-                throughput *= atten;  
+                throughput *= atten;
             } 
             else
             {
                 return vec3(0.0);
             }
-        
         }
         else  //background
         {
