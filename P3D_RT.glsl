@@ -4,181 +4,170 @@
 * http://www.jcgt.org/published/0009/03/02/
  */
 
- #include "./common.glsl"
- #iChannel0 "self"
+#include "./common.glsl"
+#iChannel0 "self"
+#iChannel1 "./cubemap/cube_{}.jpg"
+#iChannel1::Type "CubeMap"
+
 
 bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
 {
     bool hit = false;
     rec.t = tmax;
 
+    /*
+    //////////////////////
+    // CORNELL BOX
+    //////////////////////
+    // back
+    if(hit_quad(
+        createQuad(vec3(-3., 4.0, -5.0), vec3(-3., -2.0, -5.0), vec3(3.0, -2.0, -5.0), vec3(3., 4.0, -5.0)),
+        r,
+        tmin,
+        rec.t,
+        rec))
+    {
+        hit = true;
+        rec.material = createDiffuseMaterial(vec3(1.0, 1.0, 1.0));
+    }
+    // left
+    if(hit_quad(
+        createQuad(vec3(-3., 4.0, 0.0), vec3(-3., -2.0, 0.0), vec3(-3.0, -2.0, -5.0), vec3(-3., 4.0, -5.0)),
+        r,
+        tmin,
+        rec.t,
+        rec))
+    {
+        hit = true;
+        rec.material = createDiffuseMaterial(vec3(1.0, 0.0, 0.0));
+    }
+    // right
+    if(hit_quad(
+        createQuad(vec3(3., 4.0, 0.0), vec3(3., 4.0, -5.0), vec3(3.0, -2.0, -5.0), vec3(3., -2.0, 0.0)),
+        r,
+        tmin,
+        rec.t,
+        rec))
+    {
+        hit = true;
+        rec.material = createDiffuseMaterial(vec3(0.0, 1.0, 0.0));
+    }
+    // bottom
+    if(hit_quad(
+        createQuad(vec3(3., -2.0, 0.0), vec3(3., -2.0, -5.0), vec3(-3.0, -2.0, -5.0), vec3(-3., -2.0, 0.0)),
+        r,
+        tmin,
+        rec.t,
+        rec))
+    {
+        hit = true;
+        rec.material = createDiffuseMaterial(vec3(1.0, 1.0, 1.0));
+    }
+    // top
+    if(hit_quad(
+        createQuad(vec3(-3., 4.0, 0.0), vec3(-3., 4.0, -5.0), vec3(3.0, 4.0, -5.0), vec3(3., 4.0, 0.0)),
+        r,
+        tmin,
+        rec.t,
+        rec))
+    {
+        hit = true;
+        rec.material = createDiffuseMaterial(vec3(1.0, 1.0, 1.0));
+    }
+
     //
-    // BOX
+    // EMISSIVE LIGHT
     //
-    // if(hit_triangle(
-    //     createTriangle(vec3(3.0, 4.0, -5.0), vec3(3.0, -2.0, -5.0), vec3(-3.0, -2.0, -5.0)),
-    //     r,
-    //     tmin,
-    //     rec.t,
-    //     rec))
-    // {
-    //     hit = true;
-    //     rec.material = createDiffuseMaterial(vec3(1.0, 1.0, 1.0));
-    // }
-    // if(hit_triangle(
-    //     createTriangle(vec3(-3.0, 4.0, -5.0), vec3(3.0, 4.0, -5.0), vec3(-3.0, -2.0, -5.0)),
-    //     r,
-    //     tmin,
-    //     rec.t,
-    //     rec))
-    // {
-    //     hit = true;
-    //     rec.material = createDiffuseMaterial(vec3(1.0, 1.0, 1.0));
-    // }
+    if(hit_quad(
+        createQuad(vec3(-1., 3.999, -1.0), vec3(-1., 3.999, -2.0), vec3(1.0, 3.999, -2.0), vec3(1., 4.0, -1.0)),
+        r,
+        tmin,
+        rec.t,
+        rec))
+    {
+        hit = true;
+        rec.material = createDiffuseEmissiveMaterial(vec3(0.0, 0.0, 0.0), vec3(1.0, 0.9, 0.7) * 50.0);
+    }
 
-    // if(hit_triangle(
-    //     createTriangle(vec3(-3.0, 4.0, -5.0), vec3(-3.0, 4.0, 0.0), vec3(-3.0, -2.0, -5.0)),
-    //     r,
-    //     tmin,
-    //     rec.t,
-    //     rec))
-    // {
-    //     hit = true;
-    //     rec.material = createDiffuseMaterial(vec3(1.0, 0.0, 0.0));
-    // }
-    // if(hit_triangle(
-    //     createTriangle(vec3(-3.0, -2.0, 0.0), vec3(-3.0, -2.0, -5.0), vec3(-3.0, 4.0, 0.0)),
-    //     r,
-    //     tmin,
-    //     rec.t,
-    //     rec))
-    // {
-    //     hit = true;
-    //     rec.material = createDiffuseMaterial(vec3(1.0, 0.0, 0.0));
-    // }
+    //
+    // SPHERES
+    //
+    if(hit_sphere(
+        createSphere(vec3(0.0, -1.2, -2.0), 0.9),
+        r,
+        tmin,
+        rec.t,
+        rec))
+    {
+        hit = true;
+        rec.material = createDiffuseMaterial(vec3(0.2, 0.5, 0.9));
+    }
+    if(hit_sphere(
+        createSphere(vec3(-2., -1.2, -2.0), 0.9),
+        r,
+        tmin,
+        rec.t,
+        rec))
+    {
+        hit = true;
+        rec.material = createDiffuseMaterial(vec3(1.0, 1.0, 1.0));
+    }
+    if(hit_sphere(
+        createSphere(vec3(2., -1.2, -2.0), 0.9),
+        r,
+        tmin,
+        rec.t,
+        rec))
+    {
+        hit = true;
+        rec.material = createDiffuseMaterial(vec3(0.9, 0.5, 0.2));
+    }
+    */
+    //////////////////////
+    // TEST FUZZY REFRACTION
+    //////////////////////
+    if(hit_quad(
+        createQuad(vec3(-1., 3.999, -1.0), vec3(-1., 3.999, -3.0), vec3(1.0, 3.999, -3.0), vec3(1., 4.0, -1.0)),
+        r,
+        tmin,
+        rec.t,
+        rec))
+    {
+        hit = true;
+        rec.material = createDiffuseEmissiveMaterial(vec3(0.0, 0.0, 0.0), vec3(1.0, 0.9, 0.7) * 15.0);
+    }
+    if(hit_quad(
+        createQuad(vec3(8., -1.1, 0.0), vec3(8., -1.1, -4.0), vec3(-8.0, -1.1, -4.0), vec3(-8., -1.1, 0.0)),
+        r,
+        tmin,
+        rec.t,
+        rec))
+    {
+        hit = true;
+        rec.material = createDiffuseMaterial(vec3(1.0, 1.0, 1.0));
+    }
+    
+    const int c_numSpheres = 7;
+    for (int sphereIndex = 0; sphereIndex < c_numSpheres; ++sphereIndex)
+    {
+        float rough = float(sphereIndex) / float(c_numSpheres-1) * 0.5;
 
-    // if(hit_triangle(
-    //     createTriangle(vec3(3.0, 4.0, -5.0), vec3(3.0, -2.0, -5.0), vec3(3.0, 4.0, 0.0)),
-    //     r,
-    //     tmin,
-    //     rec.t,
-    //     rec))
-    // {
-    //     hit = true;
-    //     rec.material = createDiffuseMaterial(vec3(0.0, 1.0, 0.0));
-    // }
-    // if(hit_triangle(
-    //     createTriangle(vec3(3.0, -2.0, 0.0), vec3(3.0, 4.0, 0.0),  vec3(3.0, -2.0, -5.0)),
-    //     r,
-    //     tmin,
-    //     rec.t,
-    //     rec))
-    // {
-    //     hit = true;
-    //     rec.material = createDiffuseMaterial(vec3(0.0, 1.0, 0.0));
-    // }
+        if(hit_sphere(
+            createSphere(vec3(float(sphereIndex)*1.5 - 5.0, 0., -2.5), 0.6),
+            r,
+            tmin,
+            rec.t,
+            rec))
+        {
+            hit = true;
+            rec.material = createDialectricMaterial(vec3(1.0, 0.0, 0.0), 1.333, rough);
+        }
+    }
 
-    // if(hit_triangle(
-    //     createTriangle(vec3(3.0, -2.0, -5.0), vec3(-3.0, -2.0, -5.0), vec3(3.0, -2.0, 0.0)),
-    //     r,
-    //     tmin,
-    //     rec.t,
-    //     rec))
-    // {
-    //     hit = true;
-    //     rec.material = createDiffuseMaterial(vec3(1.0, 1.0, 1.0));
-    // }
-    // if(hit_triangle(
-    //     createTriangle(vec3(-3.0, -2.0, -5.0), vec3(-3.0, -2.0, 0.0), vec3(3.0, -2.0, 0.0)),
-    //     r,
-    //     tmin,
-    //     rec.t,
-    //     rec))
-    // {
-    //     hit = true;
-    //     rec.material = createDiffuseMaterial(vec3(1.0, 1.0, 1.0));
-    // }
-
-    // if(hit_triangle(
-    //     createTriangle(vec3(3.0, 4.0, -5.0), vec3(3.0, 4.0, 0.0),  vec3(-3.0, 4.0, -5.0)),
-    //     r,
-    //     tmin,
-    //     rec.t,
-    //     rec))
-    // {
-    //     hit = true;
-    //     rec.material = createDiffuseMaterial(vec3(1.0, 1.0, 1.0));
-    // }
-    // if(hit_triangle(
-    //     createTriangle(vec3(-3.0, 4.0, -5.0), vec3(3.0, 4.0, 0.0), vec3(-3.0, 4.0, 0.0)),
-    //     r,
-    //     tmin,
-    //     rec.t,
-    //     rec))
-    // {
-    //     hit = true;
-    //     rec.material = createDiffuseMaterial(vec3(1.0, 1.0, 1.0));
-    // }
-
-    // //
-    // // EMISSIVE LIGHT
-    // //
-    // if(hit_triangle(
-    //     createTriangle(vec3(1.0, 3.999, -3.0), vec3(1.0, 3.999, -1.0),  vec3(-1.0, 3.999, -3.0)),
-    //     r,
-    //     tmin,
-    //     rec.t,
-    //     rec))
-    // {
-    //     hit = true;
-    //     rec.material = createDiffuseEmissiveMaterial(vec3(0.0, 0.0, 0.0), vec3(1.0, 0.9, 0.7) * 50.0);
-    // }
-    // if(hit_triangle(
-    //     createTriangle(vec3(-1.0, 3.999, -3.0), vec3(1.0, 3.999, -1.0), vec3(-1.0, 3.999, -1.0)),
-    //     r,
-    //     tmin,
-    //     rec.t,
-    //     rec))
-    // {
-    //     hit = true;
-    //     rec.material = createDiffuseEmissiveMaterial(vec3(0.0, 0.0, 0.0), vec3(1.0, 0.9, 0.7) * 50.0);
-    // }
-
-    // //
-    // // SPHERES
-    // //
-    // if(hit_sphere(
-    //     createSphere(vec3(0.0, -1.2, -2.0), 0.8),
-    //     r,
-    //     tmin,
-    //     rec.t,
-    //     rec))
-    // {
-    //     hit = true;
-    //     rec.material = createDiffuseMaterial(vec3(0.2, 0.5, 0.9));
-    // }
-    // if(hit_sphere(
-    //     createSphere(vec3(-2., -1.2, -2.0), 0.8),
-    //     r,
-    //     tmin,
-    //     rec.t,
-    //     rec))
-    // {
-    //     hit = true;
-    //     rec.material = createDiffuseMaterial(vec3(0.2, 0.9, 0.5));
-    // }
-    // if(hit_sphere(
-    //     createSphere(vec3(2., -1.2, -2.0), 0.8),
-    //     r,
-    //     tmin,
-    //     rec.t,
-    //     rec))
-    // {
-    //     hit = true;
-    //     rec.material = createDiffuseMaterial(vec3(0.9, 0.5, 0.2));
-    // }
-
-
+    /*
+    //////////////////////
+    // TEMPLATE SCENE
+    //////////////////////
     if(hit_triangle(createTriangle(vec3(-10.0, -0.01, 10.0), vec3(10.0, -0.01, 10.0), vec3(-10.0, -0.01, -10.0)), r, tmin, rec.t, rec))
     {
         hit = true;
@@ -325,6 +314,7 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
             }
         }
     }
+    */
     return hit;
 }
 
@@ -379,14 +369,14 @@ vec3 rayColor(Ray r)
     {
         if(hit_world(r, 0.001, 10000.0, rec))
         {
-            //calculate direct lighting with 3 white point lights:
-            {
-                col += directlighting(createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
-                col += directlighting(createPointLight(vec3(8.0, 15.0, 3.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
-                col += directlighting(createPointLight(vec3(1.0, 15.0, -9.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
-            }
+            // calculate direct lighting with 3 white point lights:
+            // {
+            //     col += directlighting(createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
+            //     col += directlighting(createPointLight(vec3(8.0, 15.0, 3.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
+            //     col += directlighting(createPointLight(vec3(1.0, 15.0, -9.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
+            // }
             
-            // col += rec.material.emissive * throughput;
+            col += rec.material.emissive * throughput;
 
             //calculate secondary ray and update throughput
             Ray scatterRay;
@@ -404,8 +394,12 @@ vec3 rayColor(Ray r)
         }
         else  //background
         {
-            float t = 0.8 * (r.d.y + 1.0);
-            col += throughput * mix(vec3(1.0), vec3(0.5, 0.7, 1.0), t);
+            // float t = 0.8 * (r.d.y + 1.0);
+            // col += throughput * mix(vec3(1.0), vec3(0.5, 0.7, 1.0), t);
+            // break;
+
+            // cubemap
+            col += texture(iChannel1, r.d).rgb * throughput;
             break;
         }
     }
@@ -416,6 +410,8 @@ vec3 rayColor(Ray r)
 
 void main()
 {
+    // vec3 color = texture(iChannel0, fragCoord / iResolution.xy).rgb;
+
     gSeed = float(baseHash(floatBitsToUint(gl_FragCoord.xy))) / float(0xffffffffU) + iTime;
 
     vec2 mouse = iMouse.xy == vec2(0) ? vec2(0.0) : 

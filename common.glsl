@@ -363,17 +363,34 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
         else
             reflectProb = 1.;
 
+        vec3 rsDir;
+        vec3 rsOrigin;
         if ( hash1(gSeed) < reflectProb )  //Reflection
         {
             vec3 reflected = reflect(rIn.d, outwardNormal);
-            rScattered = createRay(rec.pos + epsilon * rec.normal, normalize(reflected), rIn.t);
-
+            // rScattered = createRay(rec.pos + epsilon * rec.normal, normalize(reflected), rIn.t);
+            rsOrigin = rec.pos + epsilon * rec.normal;
+            rsDir = normalize(reflected);
         } 
         else //Refraction
         {
-            rScattered = createRay(rec.pos - epsilon * outwardNormal, normalize(refracted), rIn.t);
+            // rScattered = createRay(rec.pos - epsilon * outwardNormal, normalize(refracted), rIn.t);
+
+            rsOrigin = rec.pos - epsilon * outwardNormal;
+            rsDir = normalize(refracted);
+            // https://blog.demofox.org/2020/06/14/casual-shadertoy-path-tracing-3-fresnel-rough-refraction-absorption-orbit-camera/ 
+            
+            //?????
+            vec3 norm = rec.normal;
+            if (niOverNt > 1.0){ // inside material, leaving
+                norm = -rec.normal;
+            }
+            
+            rsDir = normalize(mix(rsDir, normalize(-norm + randomUnitVector(gSeed)), rec.material.roughness*rec.material.roughness));
         }
 
+        rScattered = createRay(rsOrigin, rsDir, rIn.t);
+        
         return true;
     }
     return false;
@@ -409,6 +426,95 @@ bool hit_triangle(Triangle tr, Ray r, float tmin, float tmax, out HitRecord rec)
     {
         rec.t = t;
         rec.normal = normalize(cross(tr.b - tr.a, tr.c - tr.a));
+        rec.pos = pointOnRay(r, rec.t);
+        return true;
+    }
+    return false;
+}
+
+struct Quad {vec3 a; vec3 b; vec3 c; vec3 d;};
+
+// 0--b--3
+// |\
+// a c
+// |  \
+// 1    2
+Quad createQuad(vec3 v0, vec3 v1, vec3 v2, vec3 v3)
+{
+    Quad q;
+    q.a = v0; q.b = v1; q.c = v2; q.d = v3;
+    return q;
+}
+
+const int lut[4] = int[](1,2,0,1);
+float cross2d( in vec2 a, in vec2 b ) { return a.x*b.y - a.y*b.x; }
+// https://www.shadertoy.com/view/XtlBDs
+bool hit_quad(Quad q, Ray r, float tmin, float tmax, out HitRecord rec)
+{
+    // lets make v0 the origin
+    vec3 a = q.b - q.a;
+    vec3 b = q.d - q.a;
+    vec3 c = q.c - q.a;
+    vec3 p = r.o - q.a;
+
+    // intersect plane
+    vec3 nor = cross(a,b);
+    float t = -dot(p,nor)/dot(r.d,nor);
+    if( t<0.0 ) return false;
+    
+    // intersection point
+    vec3 pos = p + t*r.d;
+
+    // select projection plane
+    vec3 mor = abs(nor);
+    int id = (mor.x>mor.y && mor.x>mor.z ) ? 0 : 
+             (mor.y>mor.z)                 ? 1 : 
+                                             2 ;
+
+    int idu = lut[id  ];
+    int idv = lut[id+1];
+    
+    // project to 2D
+    vec2 kp = vec2( pos[idu], pos[idv] );
+    vec2 ka = vec2( a[idu], a[idv] );
+    vec2 kb = vec2( b[idu], b[idv] );
+    vec2 kc = vec2( c[idu], c[idv] );
+    
+    // find barycentric coords of the quadrilateral
+    vec2 kg = kc-kb-ka;
+
+    float k0 = cross2d( kp, kb );
+    float k2 = cross2d( kc-kb, ka );        // float k2 = cross2d( kg, ka );
+    float k1 = cross2d( kp, kg ) - nor[id]; // float k1 = cross2d( kb, ka ) + cross2d( kp, kg );
+    
+    // if edges are parallel, this is a linear equation
+	float u, v;
+    if( abs(k2)<0.00001 )
+    {
+		v = -k0/k1;
+        u = cross2d( kp, ka )/k1;
+    }
+	else
+    {
+        // otherwise, it's a quadratic
+        float w = k1*k1 - 4.0*k0*k2;
+        if( w<0.0 ) return false;
+        w = sqrt( w );
+
+        float ik2 = 1.0/(2.0*k2);
+
+                             v = (-k1 - w)*ik2; 
+        if( v<0.0 || v>1.0 ) v = (-k1 + w)*ik2;
+        
+        u = (kp.x - ka.x*v)/(kb.x + kg.x*v);
+    }
+    
+    if( u<0.0 || u>1.0 || v<0.0 || v>1.0) return false;
+    
+    if (t > tmin && t < tmax)
+    {
+        rec.t = t;
+        rec.normal = normalize( cross(q.c-q.b,q.d-q.b) );
         rec.pos = pointOnRay(r, rec.t);
         return true;
     }
