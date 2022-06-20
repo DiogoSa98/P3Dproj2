@@ -557,7 +557,7 @@ MovingSphere createMovingSphere(vec3 center0, vec3 center1, float radius, float 
 
 vec3 center(MovingSphere mvsphere, float time)
 {
-    return mvsphere.center0 + (mvsphere.center1 - mvsphere.center0) * ((time - mvsphere.time0) / (mvsphere.time1 - mvsphere.time0));
+    return mvsphere.center0 + ((time - mvsphere.time0) / (mvsphere.time1 - mvsphere.time0)) * (mvsphere.center1 - mvsphere.center0);
 }
 
 
@@ -608,25 +608,57 @@ bool hit_sphere(Sphere s, Ray r, float tmin, float tmax, out HitRecord rec)
     return false;
 }
 
-// bool hit_movingSphere(MovingSphere s, Ray r, float tmin, float tmax, out HitRecord rec)
-// {
-//     float B, C, delta;
-//     bool outside;
-//     float t;
+bool hit_movingSphere(MovingSphere s, Ray r, float tmin, float tmax, out HitRecord rec)
+{
+    // float B, C, delta;
+    // bool outside;
+    // float t;
 
 
-//      //INSERT YOUR CODE HERE
-//      //Calculate the moving center
-//     //calculate a valid t and normal
-	
-//     if(t < tmax && t > tmin) {
-//         rec.t = t;
-//         rec.pos = pointOnRay(r, rec.t);
-//         rec.normal = normal;
-//         return true;
-//     }
-//     else return false;
-// }
+     //INSERT YOUR CODE HERE
+     //Calculate the moving center
+    //calculate a valid t and normal
+    vec3 sphereCenter = center(s, r.t);
+    
+    //get the vector from the center of this sphere to where the ray begins.
+	vec3 m = r.o - sphereCenter;
+
+    //get the dot product of the above vector and the ray's vector
+	float b = dot(m, r.d);
+
+	float c = dot(m, m) - s.radius * s.radius;
+
+	//exit if r's origin outside s (c > 0) and r pointing away from s (b > 0)
+	if(c > 0.0 && b > 0.0)
+		return false;
+
+	//calculate discriminant
+	float discr = b * b - c;
+
+	//a negative discriminant corresponds to ray missing sphere
+	if(discr < 0.0)
+		return false;
+    
+	//ray now found to intersect sphere, compute smallest t value of intersection
+    bool fromInside = false;
+	float dist = -b - sqrt(discr);
+    if (dist < 0.0)
+    {
+        fromInside = true;
+        dist = -b + sqrt(discr);
+    }
+    
+	if (dist > tmin && dist < tmax)
+    {
+        rec.t = dist;
+        rec.pos = pointOnRay(r, rec.t);
+        rec.normal = normalize(rec.pos - sphereCenter); 
+
+        return true;
+    }
+    
+    return false;
+}
 
 struct pointLight {
     vec3 pos;

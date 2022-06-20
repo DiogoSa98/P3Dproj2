@@ -9,7 +9,7 @@
 #iChannel1 "./cubemap/cube_{}.jpg"
 #iChannel1::Type "CubeMap"
 
-#define SCENE 0
+#define SCENE 3
 
 bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
 {
@@ -166,7 +166,7 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
         }
     }
 #endif
-    /*
+#if SCENE == 2
     //////////////////////
     // TEMPLATE 
     //////////////////////
@@ -245,16 +245,16 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
                 {
                     vec3 center1 = center + vec3(0.0, hash1(gSeed) * 0.5, 0.0);
                     // diffuse
-                    // if(hit_movingSphere(
-                    //     createMovingSphere(center, center1, 0.2, 0.0, 1.0),
-                    //     r,
-                    //     tmin,
-                    //     rec.t,
-                    //     rec))
-                    // {
-                    //     hit = true;
-                    //     rec.material = createDiffuseMaterial(hash3(seed) * hash3(seed));
-                    // }
+                    if(hit_movingSphere(
+                        createMovingSphere(center, center1, 0.2, 0.0, 1.0),
+                        r,
+                        tmin,
+                        rec.t,
+                        rec))
+                    {
+                        hit = true;
+                        rec.material = createDiffuseMaterial(hash3(seed) * hash3(seed));
+                    }
                 }
                 else if(chooseMaterial < 0.5)
                 {
@@ -316,7 +316,7 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
             }
         }
     }
-    */
+#endif
     return hit;
 }
 
