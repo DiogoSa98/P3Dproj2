@@ -369,19 +369,15 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
         if ( hash1(gSeed) < reflectProb )  //Reflection
         {
             vec3 reflected = reflect(rIn.d, outwardNormal);
-            // rScattered = createRay(rec.pos + epsilon * rec.normal, normalize(reflected), rIn.t);
             rsOrigin = rec.pos + epsilon * rec.normal;
             rsDir = normalize(reflected);
         } 
         else //Refraction
         {
-            // rScattered = createRay(rec.pos - epsilon * outwardNormal, normalize(refracted), rIn.t);
-
             rsOrigin = rec.pos - epsilon * outwardNormal;
             rsDir = normalize(refracted);
+
             // https://blog.demofox.org/2020/06/14/casual-shadertoy-path-tracing-3-fresnel-rough-refraction-absorption-orbit-camera/ 
-            
-            //?????
             vec3 norm = rec.normal;
             if (niOverNt > 1.0){ // inside material, leaving
                 norm = -rec.normal;

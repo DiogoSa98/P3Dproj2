@@ -9,7 +9,7 @@
 #iChannel1 "./cubemap/cube_{}.jpg"
 #iChannel1::Type "CubeMap"
 
-#define SCENE 3
+#define SCENE 1
 
 bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
 {
@@ -419,11 +419,8 @@ void main()
     vec2 mouse = iMouse.xy == vec2(0) ? vec2(0.0) : 
               abs(iMouse.xy)/iResolution.xy - .5;
 
-    float zoom = 8.0;
-	if( iMouse.z>0.0 ) // mouse button is down, move mouze up/down to zoom in/out
-	{
-        zoom += 8.0*mouse.y;
-    }
+
+    float zoom = 8.0 + 8.0*mouse.y;
     vec3 camPos = vec3(zoom*sin(mouse.x*2.0), 3.+2.*mouse.y, zoom*cos(mouse.x*2.0));
 
 
@@ -450,7 +447,6 @@ void main()
     vec3 prevLinear = toLinear(prev.xyz);  
 
     vec2 ps = gl_FragCoord.xy + hash2(gSeed);
-    //vec2 ps = gl_FragCoord.xy;
     vec3 color = rayColor(getRay(cam, ps));
 
     if(iMouseButton.x != 0.0 || iMouseButton.y != 0.0)
