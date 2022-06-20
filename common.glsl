@@ -316,7 +316,8 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
         vec3 rd = normalize(rsTarget - rec.pos);
         vec3 ro = rec.pos + rec.normal * epsilon;
         rScattered = createRay(ro, rd, rIn.t);
-        atten = rec.material.albedo * max(dot(rScattered.d, rec.normal), 0.0) / pi;
+        // atten = rec.material.albedo * max(dot(rScattered.d, rec.normal), 0.0) / pi;
+        atten = rec.material.albedo * max(dot(rScattered.d, rec.normal), 0.0);
         return true;
     }
     if(rec.material.type == MT_METAL)

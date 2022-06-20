@@ -9,13 +9,14 @@
 #iChannel1 "./cubemap/cube_{}.jpg"
 #iChannel1::Type "CubeMap"
 
+#define SCENE 0
 
 bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
 {
     bool hit = false;
     rec.t = tmax;
 
-    /*
+#if SCENE == 0
     //////////////////////
     // CORNELL BOX
     //////////////////////
@@ -79,14 +80,14 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
     // EMISSIVE LIGHT
     //
     if(hit_quad(
-        createQuad(vec3(-1., 3.999, -1.0), vec3(-1., 3.999, -2.0), vec3(1.0, 3.999, -2.0), vec3(1., 4.0, -1.0)),
+        createQuad(vec3(-1., 3.999, -1.0), vec3(-1., 3.999, -2.0), vec3(1.0, 3.999, -2.0), vec3(1., 3.999, -1.0)),
         r,
         tmin,
         rec.t,
         rec))
     {
         hit = true;
-        rec.material = createDiffuseEmissiveMaterial(vec3(0.0, 0.0, 0.0), vec3(1.0, 0.9, 0.7) * 50.0);
+        rec.material = createDiffuseEmissiveMaterial(vec3(0.0, 0.0, 0.0), vec3(1.0, 0.9, 0.7) * 20.0);
     }
 
     //
@@ -122,19 +123,20 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
         hit = true;
         rec.material = createDiffuseMaterial(vec3(0.9, 0.5, 0.2));
     }
-    */
+#endif
+#if SCENE == 1
     //////////////////////
     // TEST FUZZY REFRACTION
     //////////////////////
     if(hit_quad(
-        createQuad(vec3(-1., 3.999, -1.0), vec3(-1., 3.999, -3.0), vec3(1.0, 3.999, -3.0), vec3(1., 4.0, -1.0)),
+        createQuad(vec3(-1., 6., -1.0), vec3(-1., 6., -3.0), vec3(1.0, 6., -3.0), vec3(1., 6.0, -1.0)),
         r,
         tmin,
         rec.t,
         rec))
     {
         hit = true;
-        rec.material = createDiffuseEmissiveMaterial(vec3(0.0, 0.0, 0.0), vec3(1.0, 0.9, 0.7) * 15.0);
+        rec.material = createDiffuseEmissiveMaterial(vec3(0.0, 0.0, 0.0), vec3(1.0, 0.9, 0.7) * 5.0);
     }
     if(hit_quad(
         createQuad(vec3(8., -1.1, 0.0), vec3(8., -1.1, -4.0), vec3(-8.0, -1.1, -4.0), vec3(-8., -1.1, 0.0)),
@@ -163,10 +165,10 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
             rec.material = createDialectricMaterial(vec3(1.0, 0.0, 0.0), 1.333, rough);
         }
     }
-
+#endif
     /*
     //////////////////////
-    // TEMPLATE SCENE
+    // TEMPLATE 
     //////////////////////
     if(hit_triangle(createTriangle(vec3(-10.0, -0.01, 10.0), vec3(10.0, -0.01, 10.0), vec3(-10.0, -0.01, -10.0)), r, tmin, rec.t, rec))
     {
