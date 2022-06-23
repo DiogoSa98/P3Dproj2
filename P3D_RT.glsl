@@ -9,7 +9,7 @@
 #iChannel1 "./cubemap/cube_{}.jpg"
 #iChannel1::Type "CubeMap"
 
-#define SCENE 2
+#define SCENE 3
 
 bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
 {
@@ -548,7 +548,7 @@ vec3 rayColor(Ray r)
         {
             // calculate direct lighting with 3 white point lights:
             {
-                if (SCENE != 1){
+                if (SCENE != 1 && SCENE != 0){
                     col += directlighting(createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
                     col += directlighting(createPointLight(vec3(8.0, 15.0, 3.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
                     col += directlighting(createPointLight(vec3(1.0, 15.0, -9.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;

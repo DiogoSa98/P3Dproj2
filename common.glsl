@@ -596,7 +596,7 @@ bool hit_sphere(Sphere s, Ray r, float tmin, float tmax, out HitRecord rec)
     {
         rec.t = dist;
         rec.pos = pointOnRay(r, rec.t);
-        rec.normal = normalize(rec.pos - s.center); 
+        rec.normal = (rec.pos - s.center) / s.radius; 
 
         return true;
     }
@@ -648,7 +648,7 @@ bool hit_movingSphere(MovingSphere s, Ray r, float tmin, float tmax, out HitReco
     {
         rec.t = dist;
         rec.pos = pointOnRay(r, rec.t);
-        rec.normal = normalize(rec.pos - sphereCenter); 
+        rec.normal = (rec.pos - sphereCenter) / s.radius; 
 
         return true;
     }
