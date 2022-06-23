@@ -9,7 +9,7 @@
 #iChannel1 "./cubemap/cube_{}.jpg"
 #iChannel1::Type "CubeMap"
 
-#define SCENE 1
+#define SCENE 2
 
 bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
 {
@@ -213,11 +213,11 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
         rec))
     {
         hit = true;
-        rec.material = createDialectricMaterial(vec3(0.0), 1.333, 0.0);
+        rec.material = createDialectricMaterial(vec3(1.0), 1.333, 0.0);
     }
 
     if(hit_sphere(
-        createSphere(vec3(0.0, 1.0, 0.0), -0.95),
+        createSphere(vec3(0.0, 1.0, 0.0), -0.9),
         r,
         tmin,
         rec.t,
@@ -226,7 +226,8 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
         hit = true;
         rec.material = createDialectricMaterial(vec3(0.0), 1.333, 0.0);
     }
-   
+
+
     int numxy = 5;
     
     for(int x = -numxy; x < numxy; ++x)
@@ -360,6 +361,15 @@ vec3 directlighting(pointLight pl, Ray r, HitRecord rec){
 	return colorOut; 
 }
 
+vec3 directAreaLight(Quad quadLight, vec3 lightColor, Ray r, HitRecord rec)
+{
+    vec3 b = quadLight.d - quadLight.a;
+    vec3 c = quadLight.c - quadLight.a;
+    float seed2 = gSeed*42.0;
+    vec3 quadLightSamplePoint = b * hash1(gSeed) + c * hash1(seed2) + quadLight.a;
+    return directlighting(createPointLight(quadLightSamplePoint, lightColor), r, rec);
+}
+
 #define MAX_BOUNCES 10
 
 vec3 rayColor(Ray r)
@@ -372,13 +382,17 @@ vec3 rayColor(Ray r)
         if(hit_world(r, 0.001, 10000.0, rec))
         {
             // calculate direct lighting with 3 white point lights:
-            // {
-            //     col += directlighting(createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
-            //     col += directlighting(createPointLight(vec3(8.0, 15.0, 3.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
-            //     col += directlighting(createPointLight(vec3(1.0, 15.0, -9.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
-            // }
+            {
+                // col += directlighting(createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
+                // col += directlighting(createPointLight(vec3(8.0, 15.0, 3.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
+                // col += directlighting(createPointLight(vec3(1.0, 15.0, -9.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
+                
+
+                Quad quadLight = createQuad(vec3(-1., 3., 3.0), vec3(-1., 3., 2.0), vec3(1.0, 3., 2.0), vec3(1., 3.0, 3.0));
+                col += directAreaLight(quadLight, vec3(1.0, 1.0, 1.0), r, rec) * throughput;
+            }
             
-            col += rec.material.emissive * throughput;
+            // col += rec.material.emissive * throughput;
 
             //calculate secondary ray and update throughput
             Ray scatterRay;
@@ -396,13 +410,13 @@ vec3 rayColor(Ray r)
         }
         else  //background
         {
-            // float t = 0.8 * (r.d.y + 1.0);
-            // col += throughput * mix(vec3(1.0), vec3(0.5, 0.7, 1.0), t);
-            // break;
+            float t = 0.8 * (r.d.y + 1.0);
+            col += throughput * mix(vec3(1.0), vec3(0.5, 0.7, 1.0), t);
+            break;
 
             // cubemap
-            col += texture(iChannel1, r.d).rgb * throughput;
-            break;
+            // col += texture(iChannel1, r.d).rgb * throughput;
+            // break;
         }
     }
     return col;
