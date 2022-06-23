@@ -9,7 +9,7 @@
 #iChannel1 "./cubemap/cube_{}.jpg"
 #iChannel1::Type "CubeMap"
 
-#define SCENE 3
+#define SCENE 2
 
 bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
 {
@@ -365,7 +365,7 @@ bool hit_world(Ray r, float tmin, float tmax, out HitRecord rec)
         rec))
     {
         hit = true;
-        rec.material = createDialectricMaterial(vec3(0.0), 1.3, 0.0);
+        rec.material = createDialectricMaterial(vec3(1.0, 1.0, 1.0), 1.3, 0.0);
     }
 
 if(hit_sphere(
@@ -376,7 +376,7 @@ if(hit_sphere(
         rec))
     {
         hit = true;
-        rec.material = createDialectricMaterial(vec3(0.0), 1.3, 0.0);
+        rec.material = createDialectricMaterial(vec3(1.0, 1.0, 1.0), 1.3, 0.0);
     }
 
     if(hit_sphere(
@@ -548,16 +548,18 @@ vec3 rayColor(Ray r)
         {
             // calculate direct lighting with 3 white point lights:
             {
-                col += directlighting(createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
-                col += directlighting(createPointLight(vec3(8.0, 15.0, 3.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
-                col += directlighting(createPointLight(vec3(1.0, 15.0, -9.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
+                if (SCENE != 1){
+                    col += directlighting(createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
+                    col += directlighting(createPointLight(vec3(8.0, 15.0, 3.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
+                    col += directlighting(createPointLight(vec3(1.0, 15.0, -9.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
                 
 
-                // Quad quadLight = createQuad(vec3(-1., 3., 3.0), vec3(-1., 3., 2.0), vec3(1.0, 3., 2.0), vec3(1., 3.0, 3.0));
-                // col += directAreaLight(quadLight, vec3(1.0, 1.0, 1.0), r, rec) * throughput;
+                    Quad quadLight = createQuad(vec3(-1., 3., 3.0), vec3(-1., 3., 2.0), vec3(1.0, 3., 2.0), vec3(1., 3.0, 3.0));
+                    col += directAreaLight(quadLight, vec3(1.0, 1.0, 1.0), r, rec) * throughput;
+                }            
             }
             
-            // col += rec.material.emissive * throughput;
+            col += rec.material.emissive * throughput;
 
             //calculate secondary ray and update throughput
             Ray scatterRay;
